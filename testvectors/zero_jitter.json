@@ -1,0 +1,66 @@
+{
+  "name": "zero_jitter",
+  "description": "IRT=500ms, unbounded MRT/MRC/MRD, all jitter 0.0: pure doubling (500, 1000, 2000, 4000, 8000, 16000ms) with no randomness and no termination.",
+  "phases": [
+    {
+      "params": {
+        "initial_rt_ms": 500,
+        "max_interval_ms": null,
+        "max_retries": null,
+        "max_duration_ms": null
+      },
+      "jitter": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "expected": [
+        {
+          "kind": "wait",
+          "rt_ms": 500,
+          "retries": 1,
+          "last_rt_ms": 500,
+          "elapsed_ms": 500
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 1000,
+          "retries": 2,
+          "last_rt_ms": 1000,
+          "elapsed_ms": 1500
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 2000,
+          "retries": 3,
+          "last_rt_ms": 2000,
+          "elapsed_ms": 3500
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 4000,
+          "retries": 4,
+          "last_rt_ms": 4000,
+          "elapsed_ms": 7500
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 8000,
+          "retries": 5,
+          "last_rt_ms": 8000,
+          "elapsed_ms": 15500
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 16000,
+          "retries": 6,
+          "last_rt_ms": 16000,
+          "elapsed_ms": 31500
+        }
+      ]
+    }
+  ]
+}

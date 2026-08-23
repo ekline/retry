@@ -1,0 +1,26 @@
+{
+  "name": "negative_saturation",
+  "description": "IRT=1s, a single jitter value of -1.5 (base + base*-1.5 = -500ms), which must saturate to rt=0 rather than go negative.",
+  "phases": [
+    {
+      "params": {
+        "initial_rt_ms": 1000,
+        "max_interval_ms": null,
+        "max_retries": null,
+        "max_duration_ms": null
+      },
+      "jitter": [
+        -1.5
+      ],
+      "expected": [
+        {
+          "kind": "wait",
+          "rt_ms": 0,
+          "retries": 1,
+          "last_rt_ms": 0,
+          "elapsed_ms": 0
+        }
+      ]
+    }
+  ]
+}

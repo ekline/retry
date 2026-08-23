@@ -1,0 +1,39 @@
+name: Go
+
+on:
+  push:
+    branches: [main]
+    paths: &go-paths
+      - "go/**"
+      - "testvectors/**"
+      - "SPEC.md"
+      - "README.md"
+      - "Makefile"
+      - ".github/workflows/go.yml"
+  pull_request:
+    paths: *go-paths
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: install staticcheck
+        run: make go-tools
+
+      - name: go vet
+        run: make go-vet
+
+      - name: gofmt (must produce no output)
+        run: make go-fmt
+
+      - name: staticcheck
+        run: make go-staticcheck
+
+      - name: go test
+        run: make go-test

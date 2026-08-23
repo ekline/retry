@@ -1,0 +1,146 @@
+{
+  "name": "dhcpv6_solicit",
+  "description": "DHCPv6 Solicit-shaped schedule: IRT=1s, MRT=1h, unbounded MRC/MRD, 16 PCG32-derived uniform jitter samples in [-0.1, 0.1]. All calls are expected to succeed (no termination).",
+  "phases": [
+    {
+      "params": {
+        "initial_rt_ms": 1000,
+        "max_interval_ms": 3600000,
+        "max_retries": null,
+        "max_duration_ms": null
+      },
+      "jitter": [
+        -0.000428,
+        0.001968,
+        0.035601,
+        -0.056357,
+        0.055458,
+        0.073806,
+        -0.053252,
+        0.036939,
+        -0.097751,
+        0.044757,
+        0.092125,
+        -0.051714,
+        0.033168,
+        0.084837,
+        -0.034722,
+        -0.024284
+      ],
+      "expected": [
+        {
+          "kind": "wait",
+          "rt_ms": 999,
+          "retries": 1,
+          "last_rt_ms": 999,
+          "elapsed_ms": 999
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 2003,
+          "retries": 2,
+          "last_rt_ms": 2003,
+          "elapsed_ms": 3002
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 4148,
+          "retries": 3,
+          "last_rt_ms": 4148,
+          "elapsed_ms": 7151
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 7829,
+          "retries": 4,
+          "last_rt_ms": 7829,
+          "elapsed_ms": 14981
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 16528,
+          "retries": 5,
+          "last_rt_ms": 16528,
+          "elapsed_ms": 31509
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 35496,
+          "retries": 6,
+          "last_rt_ms": 35496,
+          "elapsed_ms": 67006
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 67212,
+          "retries": 7,
+          "last_rt_ms": 67212,
+          "elapsed_ms": 134218
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 139390,
+          "retries": 8,
+          "last_rt_ms": 139390,
+          "elapsed_ms": 273608
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 251529,
+          "retries": 9,
+          "last_rt_ms": 251529,
+          "elapsed_ms": 525138
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 525574,
+          "retries": 10,
+          "last_rt_ms": 525574,
+          "elapsed_ms": 1050712
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 1147985,
+          "retries": 11,
+          "last_rt_ms": 1147985,
+          "elapsed_ms": 2198698
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 2177237,
+          "retries": 12,
+          "last_rt_ms": 2177237,
+          "elapsed_ms": 4375936
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 3719404,
+          "retries": 13,
+          "last_rt_ms": 3719404,
+          "elapsed_ms": 8095340
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 3905413,
+          "retries": 14,
+          "last_rt_ms": 3905413,
+          "elapsed_ms": 12000754
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 3475000,
+          "retries": 15,
+          "last_rt_ms": 3475000,
+          "elapsed_ms": 15475754
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 3512577,
+          "retries": 16,
+          "last_rt_ms": 3512577,
+          "elapsed_ms": 18988332
+        }
+      ]
+    }
+  ]
+}

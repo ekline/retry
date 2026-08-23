@@ -1,0 +1,26 @@
+{
+  "name": "mrc_zero",
+  "description": "MaxRetries=0: the configuration 'no retransmissions permitted'. The very first compute call must give up with max_retries.",
+  "phases": [
+    {
+      "params": {
+        "initial_rt_ms": 1000,
+        "max_interval_ms": null,
+        "max_retries": 0,
+        "max_duration_ms": null
+      },
+      "jitter": [
+        0.0
+      ],
+      "expected": [
+        {
+          "kind": "giveup",
+          "reason": "max_retries",
+          "retries": 1,
+          "last_rt_ms": 1000,
+          "elapsed_ms": 1000
+        }
+      ]
+    }
+  ]
+}

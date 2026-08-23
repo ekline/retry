@@ -1,0 +1,39 @@
+name: Rust
+
+on:
+  push:
+    branches: [main]
+    paths: &rust-paths
+      - "rust/**"
+      - "testvectors/**"
+      - "SPEC.md"
+      - "README.md"
+      - "Makefile"
+      - ".github/workflows/rust.yml"
+  pull_request:
+    paths: *rust-paths
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: cargo fmt --check
+        run: make rust-fmt
+
+      - name: cargo clippy (default features)
+        run: make rust-clippy
+
+      - name: cargo clippy (rand feature)
+        run: make rust-clippy-rand
+
+      - name: cargo test (default features)
+        run: make rust-test
+
+      - name: cargo test (rand feature)
+        run: make rust-test-rand

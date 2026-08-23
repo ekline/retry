@@ -1,0 +1,42 @@
+{
+  "name": "mrd_exhaustion",
+  "description": "IRT=1s, MRT=10s, MRD=5s, zero jitter. Doubling (1s, 2s, 4s) pushes cumulative elapsed past the 5s budget on the 3rd compute call, which gives up with max_duration.",
+  "phases": [
+    {
+      "params": {
+        "initial_rt_ms": 1000,
+        "max_interval_ms": 10000,
+        "max_retries": null,
+        "max_duration_ms": 5000
+      },
+      "jitter": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "expected": [
+        {
+          "kind": "wait",
+          "rt_ms": 1000,
+          "retries": 1,
+          "last_rt_ms": 1000,
+          "elapsed_ms": 1000
+        },
+        {
+          "kind": "wait",
+          "rt_ms": 2000,
+          "retries": 2,
+          "last_rt_ms": 2000,
+          "elapsed_ms": 3000
+        },
+        {
+          "kind": "giveup",
+          "reason": "max_duration",
+          "retries": 3,
+          "last_rt_ms": 4000,
+          "elapsed_ms": 7000
+        }
+      ]
+    }
+  ]
+}
