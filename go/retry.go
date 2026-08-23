@@ -161,9 +161,11 @@ type JitterSource interface {
 	NextJitter() float64
 }
 
-// FixedJitter replays a fixed sequence of jitter values, returning 0.0
-// once exhausted. Used for deterministic testing and conformance vector
-// replay.
+// FixedJitter replays a fixed sequence of jitter values. Once exhausted,
+// it keeps repeating the last value forever (or 0.0, if it was
+// constructed with no values at all) rather than silently switching to
+// unjittered behavior. Used for deterministic testing and conformance
+// vector replay.
 type FixedJitter struct {
 	values []float64
 	next   int
@@ -179,11 +181,14 @@ func NewFixedJitter(values []float64) *FixedJitter {
 
 // NextJitter implements JitterSource.
 func (f *FixedJitter) NextJitter() float64 {
-	if f.next >= len(f.values) {
+	if len(f.values) == 0 {
 		return 0.0
 	}
-	v := f.values[f.next]
-	f.next++
+	idx := min(f.next, len(f.values)-1)
+	v := f.values[idx]
+	if f.next < len(f.values) {
+		f.next++
+	}
 	return v
 }
 

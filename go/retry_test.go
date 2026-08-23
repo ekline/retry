@@ -162,14 +162,29 @@ func TestRekeyMidSequence(t *testing.T) {
 	}
 }
 
-func TestFixedJitterExhaustionReturnsZero(t *testing.T) {
-	fj := NewFixedJitter([]float64{0.5})
+func TestFixedJitterExhaustionRepeatsLastValue(t *testing.T) {
+	fj := NewFixedJitter([]float64{0.5, -0.25})
 	if got := fj.NextJitter(); got != 0.5 {
-		t.Fatalf("first NextJitter() = %v, want 0.5", got)
+		t.Fatalf("1st NextJitter() = %v, want 0.5", got)
+	}
+	if got := fj.NextJitter(); got != -0.25 {
+		t.Fatalf("2nd NextJitter() = %v, want -0.25", got)
 	}
 	for i := 0; i < 3; i++ {
+		if got := fj.NextJitter(); got != -0.25 {
+			t.Fatalf("post-exhaustion NextJitter() #%d = %v, want -0.25 (the last value, repeated)", i, got)
+		}
+	}
+}
+
+func TestFixedJitterEmptyReturnsZero(t *testing.T) {
+	// An empty FixedJitter has no "last value" to repeat, so it must fall
+	// back to 0.0 -- the only sensible default when there's nothing to
+	// replay.
+	fj := NewFixedJitter(nil)
+	for i := 0; i < 3; i++ {
 		if got := fj.NextJitter(); got != 0.0 {
-			t.Fatalf("post-exhaustion NextJitter() = %v, want 0.0", got)
+			t.Fatalf("NextJitter() #%d = %v, want 0.0", i, got)
 		}
 	}
 }

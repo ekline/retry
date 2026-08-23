@@ -172,8 +172,10 @@ impl<F: FnMut() -> f64> JitterSource for F {
     }
 }
 
-/// Replays a fixed sequence of jitter values, returning `0.0` once
-/// exhausted.
+/// Replays a fixed sequence of jitter values. Once exhausted, it keeps
+/// repeating the last value forever (or `0.0`, if it was constructed with
+/// no values at all) rather than silently switching to unjittered
+/// behavior.
 ///
 /// Used for deterministic testing and conformance vector replay.
 #[derive(Debug, Clone, Default)]
@@ -194,7 +196,11 @@ impl FixedJitter {
 
 impl JitterSource for FixedJitter {
     fn next_jitter(&mut self) -> f64 {
-        let v = self.values.get(self.next).copied().unwrap_or(0.0);
+        if self.values.is_empty() {
+            return 0.0;
+        }
+        let idx = self.next.min(self.values.len() - 1);
+        let v = self.values[idx];
         if self.next < self.values.len() {
             self.next += 1;
         }

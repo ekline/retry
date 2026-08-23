@@ -190,9 +190,21 @@ fn rekey_mid_sequence() {
 }
 
 #[test]
-fn fixed_jitter_exhaustion_returns_zero() {
-    let mut fj = FixedJitter::new(vec![0.5]);
+fn fixed_jitter_exhaustion_repeats_last_value() {
+    let mut fj = FixedJitter::new(vec![0.5, -0.25]);
     assert_eq!(fj.next_jitter(), 0.5);
+    assert_eq!(fj.next_jitter(), -0.25);
+    for _ in 0..3 {
+        assert_eq!(fj.next_jitter(), -0.25);
+    }
+}
+
+#[test]
+fn fixed_jitter_empty_returns_zero() {
+    // An empty FixedJitter has no "last value" to repeat, so it must fall
+    // back to 0.0 -- the only sensible default when there's nothing to
+    // replay.
+    let mut fj = FixedJitter::new(Vec::new());
     for _ in 0..3 {
         assert_eq!(fj.next_jitter(), 0.0);
     }

@@ -68,6 +68,9 @@ integer millisecond fields.
 - `zero_jitter.json` — all jitter 0.0; deterministic doubling only.
 - `negative_saturation.json` — a jitter value of `-1.5` driving `rt` to
   zero by saturation.
+- `jitter_exhaustion_repeats_last.json` — fewer jitter values than
+  steps; the last value must repeat forever once exhausted, not fall
+  back to `0.0`.
 
 ## Regenerating
 

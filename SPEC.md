@@ -120,7 +120,7 @@ NextJitter() -> f64
 
 Returns the multiplier applied to the candidate base RT to produce the actual RT. For example, for DHCPv6 the source would yield uniform values in `[-0.1, +0.1]`. The library is agnostic to the distribution — bounds, shape, and bias are entirely the source's concern.
 
-Required built-in: **`FixedJitter`**, which replays a slice of values. Once exhausted, all subsequent calls return `0.0`. Used for deterministic testing and conformance vector replay.
+Required built-in: **`FixedJitter`**, which replays a slice of values. Once exhausted, all subsequent calls repeat the last value forever (or `0.0`, if constructed with no values at all) rather than silently switching to unjittered behavior. Used for deterministic testing and conformance vector replay.
 
 Optional built-in: **`UniformJitter`**, which wraps a PRNG and returns uniform values in `[-factor, +factor]`.
 - **Rust**: behind the `rand` feature flag; depends on `rand_core::RngCore`.
@@ -261,6 +261,7 @@ At minimum, the following must be present:
 - **`rekey.json`** — Two test vectors sharing a state shape, modeling a re-key. The implementation runs the first to a checkpoint state, swaps params, then runs the second from that state.
 - **`zero_jitter.json`** — All jitter values 0.0; deterministic doubling without randomness.
 - **`negative_saturation.json`** — A jitter value of `-1.5` driving RT to zero by saturation.
+- **`jitter_exhaustion_repeats_last.json`** — Fewer jitter values than steps; the last value must repeat forever once exhausted (§4.5), not fall back to `0.0`.
 
 ### 7.2 Vector generation
 

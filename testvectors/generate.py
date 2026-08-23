@@ -152,7 +152,12 @@ def run_phase(
     expected: List[Dict[str, Any]] = []
 
     def next_jitter(i: int) -> float:
-        return jitter[i] if i < len(jitter) else 0.0
+        # Mirrors FixedJitter's exhaustion behavior: repeat the last value
+        # forever once the supplied jitter list runs out, or 0.0 if it was
+        # empty to begin with. See SPEC.md section 4.5.
+        if not jitter:
+            return 0.0
+        return jitter[min(i, len(jitter) - 1)]
 
     for i in range(n_steps):
         kind, payload, state = compute(params, state, next_jitter(i))
@@ -304,6 +309,22 @@ def main() -> None:
         "negative_saturation",
         "IRT=1s, a single jitter value of -1.5 (base + base*-1.5 = "
         "-500ms), which must saturate to rt=0 rather than go negative.",
+        [phase_json(params, jitter, expected)],
+    )
+
+    # -- jitter_exhaustion_repeats_last: fewer jitter values than steps.
+    # FixedJitter (and this script's own next_jitter helper) must repeat
+    # the last supplied value forever once exhausted, not silently fall
+    # back to 0.0 jitter. See SPEC.md section 4.5. --
+    params = Params(initial_rt_ms=1000)
+    jitter = [0.0, 0.5, -0.25]  # only 3 values; run_phase below asks for 6
+    expected, _ = run_phase(params, jitter, State(), n_steps=6)
+    write_vector(
+        out_dir,
+        "jitter_exhaustion_repeats_last",
+        "IRT=1s, unbounded MRT/MRC/MRD, only 3 jitter values (0.0, 0.5, "
+        "-0.25) supplied for 6 steps. Steps 4-6 must repeat -0.25 (the "
+        "last value), not fall back to 0.0.",
         [phase_json(params, jitter, expected)],
     )
 
