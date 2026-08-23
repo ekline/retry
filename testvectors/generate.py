@@ -31,6 +31,15 @@ from typing import Any, Dict, List, Optional, Tuple
 
 NS_PER_MS = 1_000_000
 
+# The fixed per-retry growth factor mandated by RFC 9915 section 15
+# (RT = 2*RTprev + jitter), currently 2 (doubling). Named generically
+# rather than e.g. DOUBLING_FACTOR in case a future major version needs
+# to generalize it, matching the Go and Rust implementations; it is
+# intentionally not a Params field today: SPEC.md section 5.1 defines
+# this algorithm as doubling, not as configurable exponential backoff
+# with an arbitrary base.
+SCALE_FACTOR = 2
+
 
 # ---------------------------------------------------------------------------
 # PCG32 (PCG-XSH-RR) -- a small, portable, non-stdlib PRNG.
@@ -105,7 +114,7 @@ def compute(params: Params, prev: State, j: float) -> Tuple[str, Any, State]:
     if prev.retries == 0:
         base_ns = params.initial_rt_ms * NS_PER_MS
     else:
-        candidate_ns = prev.last_rt_ns * 2  # Python ints never overflow;
+        candidate_ns = prev.last_rt_ns * SCALE_FACTOR  # Python ints never overflow;
         # Go/Rust saturate at their own language's max representable
         # Duration, which these test vectors never approach.
         if (

@@ -59,7 +59,7 @@ func TestFirstCallDetectionUsesRetriesNotLastRT(t *testing.T) {
 	params := Params{InitialRT: ms(1000), MaxRetries: -1}
 	prev := State{Retries: 1, LastRT: 0, Elapsed: ms(1000)}
 	step := Compute(params, prev, NewFixedJitter([]float64{0}))
-	// base = saturatingDouble(0) = 0, not InitialRT.
+	// base = saturatingScale(0) = 0, not InitialRT.
 	if step.RT != 0 {
 		t.Errorf("RT = %v, want 0 (base should double LastRT, not reuse InitialRT)", step.RT)
 	}

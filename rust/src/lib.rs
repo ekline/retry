@@ -244,7 +244,7 @@ fn select_base(params: &Params, prev: &State) -> Duration {
     if prev.retries == 0 {
         return params.initial_rt;
     }
-    let candidate = saturating_double(prev.last_rt);
+    let candidate = saturating_scale(prev.last_rt);
     match params.max_interval {
         Some(max_interval) if candidate > max_interval => max_interval,
         _ => candidate,
@@ -275,10 +275,18 @@ fn apply_jitter(base: Duration, j: f64) -> Duration {
     Duration::from_nanos(biased as u64)
 }
 
-/// Doubles `d`, saturating at the maximum representable `Duration`
-/// instead of overflowing.
-fn saturating_double(d: Duration) -> Duration {
-    d.checked_mul(2).unwrap_or(Duration::MAX)
+/// The fixed per-retry growth factor mandated by RFC 9915 section 15
+/// (`RT = 2*RTprev + jitter`), currently 2 (doubling). Named generically
+/// rather than e.g. `DOUBLING_FACTOR` in case a future major version needs
+/// to generalize it; it is intentionally not a `Params` field today --
+/// `SPEC.md` section 5.1 defines this algorithm as doubling, not as
+/// configurable exponential backoff with an arbitrary base.
+const SCALE_FACTOR: u32 = 2;
+
+/// Multiplies `d` by [`SCALE_FACTOR`], saturating at the maximum
+/// representable `Duration` instead of overflowing.
+fn saturating_scale(d: Duration) -> Duration {
+    d.checked_mul(SCALE_FACTOR).unwrap_or(Duration::MAX)
 }
 
 /// Adds `a` and `b`, saturating at the maximum representable `Duration`

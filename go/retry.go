@@ -248,7 +248,7 @@ func selectBase(params Params, prev State) time.Duration {
 	if prev.Retries == 0 {
 		return params.InitialRT
 	}
-	candidate := saturatingDouble(prev.LastRT)
+	candidate := saturatingScale(prev.LastRT)
 	if params.maxIntervalBounded() && candidate > params.MaxInterval {
 		return params.MaxInterval
 	}
@@ -273,13 +273,21 @@ func applyJitter(base time.Duration, j float64) time.Duration {
 	return time.Duration(math.Round(rtF))
 }
 
-// saturatingDouble doubles d, saturating at the maximum representable
-// time.Duration instead of overflowing.
-func saturatingDouble(d time.Duration) time.Duration {
-	if d > math.MaxInt64/2 {
+// scaleFactor is the fixed per-retry growth factor mandated by RFC 9915
+// §15 (RT = 2*RTprev + jitter), currently 2 (doubling). Named generically
+// rather than e.g. doublingFactor in case a future major version needs to
+// generalize it; it is intentionally not a Params field today -- SPEC.md
+// §5.1 defines this algorithm as doubling, not as configurable exponential
+// backoff with an arbitrary base.
+const scaleFactor = 2
+
+// saturatingScale multiplies d by scaleFactor, saturating at the maximum
+// representable time.Duration instead of overflowing.
+func saturatingScale(d time.Duration) time.Duration {
+	if d > math.MaxInt64/scaleFactor {
 		return math.MaxInt64
 	}
-	return d * 2
+	return d * scaleFactor
 }
 
 // saturatingAdd adds a and b (both non-negative time.Durations by

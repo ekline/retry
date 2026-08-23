@@ -149,6 +149,8 @@ else:
 
 The detection of "first call" uses `prev.Retries == 0` rather than `prev.LastRT == 0`, so that a caller resuming from a checkpointed state behaves correctly.
 
+The `2` is a fixed constant of this algorithm, not a tunable parameter: it comes directly from RFC 9915's `RT = 2*RTprev + jitter`, the same way DHCPv6's retransmission timing has always doubled (RFC 3315, RFC 8415 §15). Both implementations name it `scaleFactor` / `SCALE_FACTOR` -- deliberately generic names, not `doublingFactor`, in case a future major version needs to generalize it -- but deliberately do not expose it on `Params` today: doing so would turn this library from an implementation of one specific RFC 9915-shaped algorithm into a generic configurable-backoff library, which is out of scope -- the same reasoning §11 item 3 already applies to protocol-specific `Params` presets.
+
 ### 5.2 Jitter application
 
 ```
