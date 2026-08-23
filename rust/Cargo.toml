@@ -25,3 +25,5 @@ rand_core = { version = "0.6.4", optional = true, default-features = false }
 # build" requirement for library consumers.
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# Property-based tests for `compute` (tests/properties.rs).
+proptest = "1"

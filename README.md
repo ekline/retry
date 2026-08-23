@@ -103,6 +103,17 @@ CI scopes each workflow to the parts of the repo that changed, and bounds
 every test run (`go test -timeout 60s`; `timeout 60 cargo test`) so an
 accidental infinite loop fails fast instead of hanging the job.
 
+They also include property/fuzz tests for invariants that must hold for
+*any* input (never panics, `Elapsed` never decreases, `Retries` saturates
+instead of overflowing, NaN jitter behaves like `0.0`) -- see `SPEC.md`
+§13. `make check` only runs the fast, seeded versions of these; for a
+deeper local search:
+
+```sh
+make go-fuzz             # extended Go fuzzing, 30s
+make rust-proptest-deep  # 100k proptest cases
+```
+
 ### Without `make`
 
 ```sh

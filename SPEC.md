@@ -41,6 +41,7 @@ Single repository, two language implementations, shared test vectors.
 │   ├── retry.go
 │   ├── sequence.go
 │   ├── retry_test.go
+│   ├── fuzz_test.go
 │   └── conformance_test.go
 └── rust/
     ├── Cargo.toml
@@ -50,6 +51,7 @@ Single repository, two language implementations, shared test vectors.
     └── tests/
         ├── basics.rs
         ├── sequence.rs
+        ├── properties.rs
         └── conformance.rs
 ```
 
@@ -77,7 +79,7 @@ Describes the retransmission schedule. Immutable once constructed; pass a new `P
 | `MaxDuration` | MRD      | Give up once cumulative scheduled elapsed time would exceed this. Optional / unbounded.    |
 
 Optionality:
-- **Rust**: optional fields are `Option<Duration>` / `Option<u32>`. `None` = unbounded.
+- **Rust**: optional fields are `Option<Duration>` / `Option<u64>`. `None` = unbounded. `State.retries` and `Params.max_retries` are `u64` (not `u32`) to match Go's `int`, which is effectively unbounded for this purpose on any real platform; both saturate rather than overflow (see §5.3).
 - **Go**: optional fields use zero-value sentinels. A zero `time.Duration` means unbounded for `MaxInterval` and `MaxDuration`. A negative `int` means unbounded for `MaxRetries` (`0` means "no retransmissions permitted").
 
 ### 4.2 State
@@ -162,15 +164,17 @@ rt = base + base * j
 
 If `rt < 0` (which requires `j < -1.0`), saturate to zero.
 
+If `rt` is NaN (only reachable via a non-finite `JitterSource`: a NaN jitter value directly, or a `0 * Inf` produced by an infinite jitter value when `base` is exactly zero), treat it as if jitter had been `0.0`, i.e. fall back to the unjittered `base`. A `JitterSource` is caller-supplied and this library cannot make it well-behaved, so `compute` must still return a well-formed `Step` rather than propagate NaN into `State`.
+
 ### 5.3 State update
 
 ```
-new_state.Retries = prev.Retries + 1
+new_state.Retries = prev.Retries + 1    # saturating
 new_state.LastRT  = rt
 new_state.Elapsed = prev.Elapsed + rt   # saturating add
 ```
 
-All Duration arithmetic is saturating. Overflow yields the maximum representable Duration; this is documented behavior and not an error.
+All Duration arithmetic is saturating. Overflow yields the maximum representable Duration; this is documented behavior and not an error. The `Retries` counter saturates the same way, at the maximum representable value for its type (Go's platform-word-sized `int`; Rust's `u64`), rather than wrapping or panicking -- reachable only after billions of calls per second for centuries, but a checkpointed `State` can be constructed with any value, so both implementations guard against it explicitly rather than relying on it being unreachable in practice.
 
 ### 5.4 Termination check
 
@@ -384,4 +388,35 @@ Both languages let a plain function act as a `JitterSource` without a named wrap
 
 - **Rust**: a blanket `impl<F: FnMut() -> f64> JitterSource for F` means any `FnMut() -> f64` closure (or function item) can be passed anywhere a `JitterSource` is expected, e.g. `compute(&params, state, &mut || rng.gen_range(-0.1..0.1))`.
 - **Go**: `JitterFunc func() float64` implements `JitterSource` via a method on the function type, mirroring `http.HandlerFunc`: `retry.JitterFunc(func() float64 { return rng.Float64()*0.2 - 0.1 })`.
+
+## 13. Property-based and fuzz testing
+
+The shared conformance vectors (§7) check specific, hand-picked sequences. They do not explore the input space broadly, and bounds-checking review found real bugs (integer overflow, NaN propagation, a float-rounding hole at the edge of `int64`) that only showed up once specific extreme values were tried. Both implementations therefore also test properties that must hold for *any* input, not just the chosen vectors:
+
+- `compute` never panics, for any `Params` / `State` / jitter value combination.
+- `State.elapsed` never decreases from one call to the next.
+- `State.retries` increases by exactly 1 per call, or stays saturated at the maximum representable value for its type once reached (never wraps, never panics) -- see §5.3.
+- The termination decision (`Wait` / `GiveUp(MaxRetries)` / `GiveUp(MaxDuration)`) always matches §5.4's order exactly, for the resulting state.
+- A `NaN` jitter value always produces the same result as a `0.0` jitter value (§5.2).
+
+### 13.1 Go
+
+`go/fuzz_test.go` uses Go's built-in fuzzing (`testing.F`, stdlib since Go 1.18; no new dependency). `go test ./...` (including in CI) runs only the seed corpus -- the hand-found edge cases plus a routine case -- as ordinary test cases. Extended, mutation-guided fuzzing is a local, opt-in activity:
+
+```sh
+go test -fuzz=FuzzCompute -fuzztime=30s ./go
+```
+
+Any input the fuzzer finds that fails an invariant is saved under `go/testdata/fuzz/FuzzCompute/`; such files are checked in and thereafter run automatically as regression cases by plain `go test`.
+
+### 13.2 Rust
+
+`rust/tests/properties.rs` uses `proptest` (dev-dependency only; does not affect the published crate's dependency graph). `cargo test` (including in CI) runs each property against its default number of random cases (256) every time, with a fresh seed -- this is ordinary property-based testing, not coverage-guided fuzzing, so no separate "fuzzing mode" is needed. For a deeper local search:
+
+```sh
+PROPTEST_CASES=100000 cargo test --test properties
+```
+
+Any failure is shrunk to a minimal reproducing case and saved under `rust/tests/regressions/`, replayed automatically on subsequent runs.
+
 

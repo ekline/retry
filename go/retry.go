@@ -228,7 +228,7 @@ func Compute(params Params, prev State, jitter JitterSource) Step {
 	rt := applyJitter(base, j)
 
 	newState := State{
-		Retries: prev.Retries + 1,
+		Retries: saturatingAddInt(prev.Retries, 1),
 		LastRT:  rt,
 		Elapsed: saturatingAdd(prev.Elapsed, rt),
 	}
@@ -260,14 +260,27 @@ func selectBase(params Params, prev State) time.Duration {
 // floating-point arithmetic, and conformance vectors are sensitive to
 // evaluation order -- then rounds to the nearest nanosecond (half away
 // from zero, matching Rust's f64::round). Results below zero (which
-// requires j < -1.0) saturate to zero.
+// requires j < -1.0) saturate to zero. A NaN result (whether from a NaN
+// jitter value, or a 0 * +-Inf edge case when base is zero and jitter is
+// infinite) is treated as if jitter were 0.0, falling back to the
+// unjittered base rather than propagating NaN into a nonsensical
+// Duration.
 func applyJitter(base time.Duration, j float64) time.Duration {
 	baseF := float64(base)
 	rtF := baseF + baseF*j
+	if math.IsNaN(rtF) {
+		rtF = baseF
+	}
 	if rtF < 0 {
 		return 0
 	}
-	if rtF > float64(math.MaxInt64) {
+	// float64(math.MaxInt64) rounds up to exactly 2^63 (a float64 mantissa
+	// cannot hold all 63 significant bits of math.MaxInt64), so this must
+	// be >=, not >: rtF == 2^63 needs to saturate too, since converting it
+	// (or anything past it) via time.Duration(...) below would silently
+	// produce an implementation-defined result instead (in practice, the
+	// most negative int64, per this platform's float-to-int conversion).
+	if rtF >= float64(math.MaxInt64) {
 		return math.MaxInt64
 	}
 	return time.Duration(math.Round(rtF))
@@ -296,6 +309,21 @@ func saturatingScale(d time.Duration) time.Duration {
 func saturatingAdd(a, b time.Duration) time.Duration {
 	if a > math.MaxInt64-b {
 		return math.MaxInt64
+	}
+	return a + b
+}
+
+// saturatingAddInt adds a and b (both non-negative ints by construction,
+// e.g. State.Retries), saturating at math.MaxInt instead of overflowing.
+// Mirrors Rust's built-in u64::saturating_add, used for the same purpose
+// on State.Retries there. Unlike a silent wraparound (Go's default `+`
+// behavior for int), this keeps a checkpointed State's Retries counter
+// from ever going negative, which would otherwise disable the MaxRetries
+// termination check (a negative Retries is never greater than any sane
+// positive MaxRetries).
+func saturatingAddInt(a, b int) int {
+	if a > math.MaxInt-b {
+		return math.MaxInt
 	}
 	return a + b
 }

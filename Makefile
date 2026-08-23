@@ -22,6 +22,9 @@ help:
 	@echo "make rust-clippy-rand   cargo clippy --all-targets --features rand -- -D warnings"
 	@echo "make rust-test          timeout 60 cargo test"
 	@echo "make rust-test-rand     timeout 60 cargo test --features rand"
+	@echo ""
+	@echo "make go-fuzz            extended local fuzzing (30s), not part of check"
+	@echo "make rust-proptest-deep 100k proptest cases, not part of check"
 
 .PHONY: check
 check: go-check rust-check
@@ -87,3 +90,13 @@ rust-test:
 .PHONY: rust-test-rand
 rust-test-rand:
 	cd rust && timeout 60 cargo test --features rand
+
+## --- Extended, opt-in testing (not part of check/CI) ---
+
+.PHONY: go-fuzz
+go-fuzz:
+	cd go && go test -fuzz=FuzzCompute -fuzztime=30s .
+
+.PHONY: rust-proptest-deep
+rust-proptest-deep:
+	cd rust && PROPTEST_CASES=100000 cargo test --test properties

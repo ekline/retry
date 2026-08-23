@@ -45,7 +45,7 @@ pub struct Params {
     /// Give up once this many retransmissions have been scheduled
     /// (RFC 9915 MRC). `None` means unbounded; `Some(0)` means no
     /// retransmissions are permitted at all.
-    pub max_retries: Option<u32>,
+    pub max_retries: Option<u64>,
 
     /// Give up once cumulative scheduled elapsed time would exceed this
     /// (RFC 9915 MRD). `None` means unbounded.
@@ -81,7 +81,7 @@ impl Params {
 
     /// Sets `max_retries` (RFC 9915 MRC), the retry budget. `0` permits no
     /// retransmissions at all.
-    pub fn with_max_retries(mut self, max_retries: u32) -> Self {
+    pub fn with_max_retries(mut self, max_retries: u64) -> Self {
         self.max_retries = Some(max_retries);
         self
     }
@@ -102,8 +102,10 @@ impl Params {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct State {
     /// Number of retransmissions scheduled so far. Zero before the first
-    /// call.
-    pub retries: u32,
+    /// call. Saturates at `u64::MAX` instead of overflowing (see
+    /// `compute`'s use of `saturating_add`); reaching that in practice
+    /// would require billions of calls per second for centuries.
+    pub retries: u64,
 
     /// Most recently computed RT. Zero before the first call.
     pub last_rt: Duration,
@@ -211,7 +213,7 @@ pub fn compute<J: JitterSource + ?Sized>(params: &Params, prev: State, jitter: &
     let rt = apply_jitter(base, j);
 
     let new_state = State {
-        retries: prev.retries + 1,
+        retries: prev.retries.saturating_add(1),
         last_rt: rt,
         elapsed: saturating_add(prev.elapsed, rt),
     };
@@ -256,10 +258,17 @@ fn select_base(params: &Params, prev: &State) -> Duration {
 /// floating-point arithmetic, and conformance vectors are sensitive to
 /// evaluation order), then rounds to the nearest nanosecond, half away
 /// from zero. Results below zero (which requires `j < -1.0`) saturate to
-/// zero.
+/// zero. A NaN result is treated as if jitter were 0.0.
 fn apply_jitter(base: Duration, j: f64) -> Duration {
     let base_f = base.as_nanos() as f64;
-    let rt_f = base_f + base_f * j;
+    let mut rt_f = base_f + base_f * j;
+    if rt_f.is_nan() {
+        // A NaN result (whether from a NaN jitter value, or a 0 * +-Inf
+        // edge case when base is zero and jitter is infinite) is treated
+        // as if jitter were 0.0, falling back to the unjittered base
+        // rather than propagating NaN into a nonsensical Duration.
+        rt_f = base_f;
+    }
     if rt_f < 0.0 {
         return Duration::ZERO;
     }

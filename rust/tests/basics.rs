@@ -247,3 +247,38 @@ fn closures_work_as_jitter_sources() {
         other => panic!("expected Wait, got {other:?}"),
     }
 }
+
+#[test]
+fn nan_jitter_falls_back_to_unjittered_base() {
+    let params = base_params();
+    match compute(&params, State::default(), &mut || f64::NAN) {
+        Step::Wait { rt, .. } => assert_eq!(rt, ms(1000)),
+        other => panic!("expected Wait, got {other:?}"),
+    }
+}
+
+#[test]
+fn nan_from_zero_times_infinity_does_not_leak() {
+    // InitialRT=0 combined with +Inf jitter produces 0 * +Inf = NaN in the
+    // underlying float math; this must not leak through as NaN.
+    let mut params = base_params();
+    params.initial_rt = Duration::ZERO;
+    match compute(&params, State::default(), &mut || f64::INFINITY) {
+        Step::Wait { rt, .. } => assert_eq!(rt, Duration::ZERO),
+        other => panic!("expected Wait, got {other:?}"),
+    }
+}
+
+#[test]
+fn retries_saturates_instead_of_overflowing() {
+    let params = base_params();
+    let prev = State {
+        retries: u64::MAX,
+        last_rt: ms(1000),
+        elapsed: ms(1000),
+    };
+    match compute(&params, prev, &mut || 0.0) {
+        Step::Wait { state, .. } => assert_eq!(state.retries, u64::MAX),
+        other => panic!("expected Wait, got {other:?}"),
+    }
+}

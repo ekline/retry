@@ -4,6 +4,7 @@
 package retry
 
 import (
+	"math"
 	"math/rand/v2"
 	"testing"
 	"time"
@@ -300,5 +301,50 @@ func TestSequenceSetParamsRekeys(t *testing.T) {
 	}
 	if seq.RT() != ms(3000) {
 		t.Errorf("post-rekey RT() = %v, want %v (capped by new MRT)", seq.RT(), ms(3000))
+	}
+}
+
+func TestApplyJitterNaNFallsBackToUnjitteredBase(t *testing.T) {
+	params := NewParams(ms(1000))
+	step := Compute(params, State{}, JitterFunc(func() float64 { return math.NaN() }))
+	if step.RT != ms(1000) {
+		t.Errorf("NaN jitter: RT = %v, want %v (should fall back to unjittered base)", step.RT, ms(1000))
+	}
+}
+
+func TestApplyJitterNaNFromZeroTimesInfinityDoesNotLeak(t *testing.T) {
+	// InitialRT=0 combined with +Inf jitter produces 0 * +Inf = NaN in the
+	// underlying float math; this must not leak through as NaN.
+	params := NewParams(0)
+	step := Compute(params, State{}, JitterFunc(func() float64 { return math.Inf(1) }))
+	if step.RT != 0 {
+		t.Errorf("RT = %v, want 0", step.RT)
+	}
+}
+
+func TestApplyJitterNearInt64MaxDoesNotGoNegative(t *testing.T) {
+	// Regression: float64(math.MaxInt64) rounds up to exactly 2^63 (a
+	// float64 mantissa cannot hold all 63 significant bits), so the
+	// overflow guard must be >=, not >, or this silently produces a huge
+	// negative Duration instead of saturating.
+	params := NewParams(math.MaxInt64)
+	step := Compute(params, State{}, NewFixedJitter([]float64{0}))
+	if step.RT < 0 {
+		t.Fatalf("RT went negative: %v", step.RT)
+	}
+	if step.RT != math.MaxInt64 {
+		t.Errorf("RT = %v, want %v (saturated)", step.RT, time.Duration(math.MaxInt64))
+	}
+}
+
+func TestRetriesSaturatesInsteadOfWrapping(t *testing.T) {
+	params := NewParams(ms(1000))
+	prev := State{Retries: math.MaxInt, LastRT: ms(1000), Elapsed: ms(1000)}
+	step := Compute(params, prev, NewFixedJitter([]float64{0}))
+	if step.State.Retries < 0 {
+		t.Fatalf("Retries went negative: %d (int overflow wraparound)", step.State.Retries)
+	}
+	if step.State.Retries != math.MaxInt {
+		t.Errorf("Retries = %d, want %d (saturated, not wrapped)", step.State.Retries, math.MaxInt)
 	}
 }

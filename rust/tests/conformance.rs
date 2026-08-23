@@ -56,7 +56,7 @@ impl VectorParams {
         Params {
             initial_rt: ms(self.initial_rt_ms),
             max_interval: self.max_interval_ms.map(ms),
-            max_retries: self.max_retries.map(|n| n as u32),
+            max_retries: self.max_retries.map(|n| n as u64),
             max_duration: self.max_duration_ms.map(ms),
         }
     }
