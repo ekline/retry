@@ -8,6 +8,7 @@
 .PHONY: help
 help:
 	@echo "make check              run everything CI runs (go-check + rust-check)"
+	@echo "make check-all          check + go-fuzz + rust-proptest-deep (slower)"
 	@echo "make setup              one-time local tool install (staticcheck, ...)"
 	@echo ""
 	@echo "make go-check           go-vet + go-fmt + go-staticcheck + go-test"
@@ -28,6 +29,9 @@ help:
 
 .PHONY: check
 check: go-check rust-check
+
+.PHONY: check-all
+check-all: check go-fuzz rust-proptest-deep
 
 .PHONY: setup
 setup: go-tools
