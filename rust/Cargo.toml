@@ -10,13 +10,25 @@ readme = "../README.md"
 keywords = ["backoff", "retry", "retransmission"]
 categories = ["algorithms", "no-std"]
 
+[[bin]]
+name = "retry"
+path = "src/main.rs"
+# Keeps the library's default build (and any downstream `retry = "0.1"`
+# library-only consumer) free of the CLI's dependencies: this target,
+# and clap below, are only pulled in when --features cli is requested.
+required-features = ["cli"]
+
 [features]
 default = []
 # Enables UniformJitter, a JitterSource backed by any rand_core::RngCore.
 rand = ["dep:rand_core"]
+# Enables the `retry` CLI binary (src/main.rs), a small `seq`-like tool
+# for manually inspecting a Params configuration. See SPEC.md §13.
+cli = ["dep:clap"]
 
 [dependencies]
 rand_core = { version = "0.6.4", optional = true, default-features = false }
+clap = { version = "4", optional = true, features = ["derive"] }
 
 [dev-dependencies]
 # Used only by tests/conformance.rs to parse the shared testvectors/*.json

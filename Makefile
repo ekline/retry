@@ -21,8 +21,10 @@ help:
 	@echo "make rust-fmt           cargo fmt -- --check"
 	@echo "make rust-clippy        cargo clippy --all-targets -- -D warnings"
 	@echo "make rust-clippy-rand   cargo clippy --all-targets --features rand -- -D warnings"
+	@echo "make rust-clippy-cli    cargo clippy --all-targets --features cli -- -D warnings"
 	@echo "make rust-test          timeout 60 cargo test"
 	@echo "make rust-test-rand     timeout 60 cargo test --features rand"
+	@echo "make rust-test-cli      timeout 60 cargo test --features cli"
 	@echo ""
 	@echo "make go-fuzz            extended local fuzzing (30s), not part of check"
 	@echo "make rust-proptest-deep 100k proptest cases, not part of check"
@@ -73,7 +75,7 @@ go-test:
 ## --- Rust ---
 
 .PHONY: rust-check
-rust-check: rust-fmt rust-clippy rust-clippy-rand rust-test rust-test-rand
+rust-check: rust-fmt rust-clippy rust-clippy-rand rust-clippy-cli rust-test rust-test-rand rust-test-cli
 
 .PHONY: rust-fmt
 rust-fmt:
@@ -87,6 +89,10 @@ rust-clippy:
 rust-clippy-rand:
 	cd rust && cargo clippy --all-targets --features rand -- -D warnings
 
+.PHONY: rust-clippy-cli
+rust-clippy-cli:
+	cd rust && cargo clippy --all-targets --features cli -- -D warnings
+
 .PHONY: rust-test
 rust-test:
 	cd rust && timeout 60 cargo test
@@ -94,6 +100,10 @@ rust-test:
 .PHONY: rust-test-rand
 rust-test-rand:
 	cd rust && timeout 60 cargo test --features rand
+
+.PHONY: rust-test-cli
+rust-test-cli:
+	cd rust && timeout 60 cargo test --features cli
 
 ## --- Extended, opt-in testing (not part of check/CI) ---
 

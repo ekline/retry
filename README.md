@@ -15,7 +15,7 @@ See [`SPEC.md`](./SPEC.md) for the full design specification.
 
 The core API is three plain types (`Params`, `State`, `Step`) plus one pure
 function (`compute`) -- see `SPEC.md` §4-6. Both languages also offer a
-small additive convenience layer (`SPEC.md` §12) that removes the most
+small additive convenience layer (`SPEC.md` §11) that removes the most
 common boilerplate: constructing `Params` and threading `State` between
 calls by hand.
 
@@ -68,6 +68,33 @@ Neither `Sequence` nor `NewSequence` does any I/O, scheduling, or sleeping
 themselves -- they only remove the manual `State`-threading boilerplate: it
 is still the caller's job to sleep, send, and detect a response.
 
+## `retry`: a small CLI, in the spirit of `seq`
+
+A Rust-only, `seq`-like command-line tool for manually inspecting a
+`Params` configuration -- prints the computed retransmission timeouts,
+one per line:
+
+```sh
+$ retry 1000 --max-interval-ms 30000 --max-retries 10
+1000
+2000
+4000
+8000
+16000
+30000
+30000
+30000
+30000
+30000
+retry: gave up: MaxRetries
+```
+
+(the last line is printed to stderr, not stdout, so it doesn't interfere
+with piping the durations elsewhere)
+
+Only built with `--features cli` (see `SPEC.md` §13), so the default
+build stays dependency-free. Run `retry --help` for the full option list.
+
 ## Repository layout
 
 ```
@@ -106,7 +133,7 @@ accidental infinite loop fails fast instead of hanging the job.
 They also include property/fuzz tests for invariants that must hold for
 *any* input (never panics, `Elapsed` never decreases, `Retries` saturates
 instead of overflowing, NaN jitter behaves like `0.0`) -- see `SPEC.md`
-§13. `make check` only runs the fast, seeded versions of these; for a
+§12. `make check` only runs the fast, seeded versions of these; for a
 deeper local search:
 
 ```sh
@@ -123,9 +150,11 @@ cd rust && cargo fmt -- --check && cargo clippy --all-targets -- -D warnings && 
 
 ## Status
 
-Both implementations are complete per `SPEC.md` and pass the shared
-conformance suite. See `SPEC.md` §11 for open items to resolve before a 1.0
-release (this repo has already settled on `retry` as the crate/module name).
+Both implementations are complete per `SPEC.md`, pass the shared
+conformance suite, and have property/fuzz test coverage (§12). All of the
+spec's original open design questions are settled: naming (§2), the
+convenience API's intentionally narrow scope (§11.1, §11.2), and the
+`retry` CLI (§13).
 
 ## License
 

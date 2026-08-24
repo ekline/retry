@@ -32,8 +32,14 @@ jobs:
       - name: cargo clippy (rand feature)
         run: make rust-clippy-rand
 
+      - name: cargo clippy (cli feature)
+        run: make rust-clippy-cli
+
       - name: cargo test (default features)
         run: make rust-test
 
       - name: cargo test (rand feature)
         run: make rust-test-rand
+
+      - name: cargo test (cli feature)
+        run: make rust-test-cli
