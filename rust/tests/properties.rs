@@ -13,7 +13,7 @@ use core::time::Duration;
 use proptest::prelude::*;
 use proptest::test_runner::FileFailurePersistence;
 
-use retry::{compute, Params, State, Step, Termination};
+use libretry::{compute, Params, State, Step, Termination};
 
 /// Durations up to `u64::MAX` nanoseconds (~584 years), the range in
 /// which this library's jitter arithmetic is exact; see SPEC.md §5.1's

@@ -14,7 +14,7 @@ use crate::{compute, JitterSource, Params, State, Step, Termination};
 ///
 /// ```
 /// # use core::time::Duration;
-/// # use retry::{FixedJitter, Params, Sequence};
+/// # use libretry::{FixedJitter, Params, Sequence};
 /// # fn transmit(_msg: &str) {}
 /// # fn sleep(_d: Duration) {}
 /// # fn got_response() -> bool { true }

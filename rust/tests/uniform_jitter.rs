@@ -5,8 +5,8 @@
 //! compiles to an empty test binary when `rand` is not enabled.
 #![cfg(feature = "rand")]
 
+use libretry::{JitterSource, UniformJitter};
 use rand_core::{Error, RngCore};
-use retry::{JitterSource, UniformJitter};
 
 /// A tiny deterministic xorshift64* generator implementing `RngCore`,
 /// used only to exercise `UniformJitter` without an extra dev-dependency

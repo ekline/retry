@@ -4,7 +4,7 @@
 //! Unit-style tests for the public API, mirroring go/retry_test.go.
 
 use core::time::Duration;
-use retry::{compute, FixedJitter, JitterSource, Params, State, Step, Termination};
+use libretry::{compute, FixedJitter, JitterSource, Params, State, Step, Termination};
 
 fn ms(n: u64) -> Duration {
     Duration::from_millis(n)

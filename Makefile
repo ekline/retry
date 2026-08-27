@@ -22,12 +22,12 @@ help:
 	@echo "make rust-clippy        cargo clippy --all-targets -- -D warnings"
 	@echo "make rust-clippy-rand   cargo clippy --all-targets --features rand -- -D warnings"
 	@echo "make rust-clippy-cli    cargo clippy --all-targets --features cli -- -D warnings"
-	@echo "make rust-test          timeout 60 cargo test"
-	@echo "make rust-test-rand     timeout 60 cargo test --features rand"
-	@echo "make rust-test-cli      timeout 60 cargo test --features cli"
+	@echo "make rust-test          nice timeout 60 cargo test"
+	@echo "make rust-test-rand     nice timeout 60 cargo test --features rand"
+	@echo "make rust-test-cli      nice timeout 60 cargo test --features cli"
 	@echo ""
-	@echo "make go-fuzz            extended local fuzzing (30s), not part of check"
-	@echo "make rust-proptest-deep 100k proptest cases, not part of check"
+	@echo "make go-fuzz            extended local fuzzing (30s, capped at 2m), not part of check"
+	@echo "make rust-proptest-deep 100k proptest cases (capped at 5m), not part of check"
 
 .PHONY: check
 check: go-check rust-check
@@ -58,19 +58,19 @@ go-check: go-vet go-fmt go-staticcheck go-test
 
 .PHONY: go-vet
 go-vet:
-	cd go && go vet ./...
+	cd go && nice go vet ./...
 
 .PHONY: go-fmt
 go-fmt:
-	cd go && test -z "$$(gofmt -l .)"
+	cd go && test -z "$$(nice gofmt -l .)"
 
 .PHONY: go-staticcheck
 go-staticcheck:
-	cd go && $(GOBIN_PATH) staticcheck ./...
+	cd go && $(GOBIN_PATH) nice staticcheck ./...
 
 .PHONY: go-test
 go-test:
-	cd go && go test ./... -v -timeout 60s
+	cd go && nice go test ./... -v -timeout 60s
 
 ## --- Rust ---
 
@@ -79,38 +79,38 @@ rust-check: rust-fmt rust-clippy rust-clippy-rand rust-clippy-cli rust-test rust
 
 .PHONY: rust-fmt
 rust-fmt:
-	cd rust && cargo fmt -- --check
+	cd rust && nice cargo fmt -- --check
 
 .PHONY: rust-clippy
 rust-clippy:
-	cd rust && cargo clippy --all-targets -- -D warnings
+	cd rust && nice cargo clippy --all-targets -- -D warnings
 
 .PHONY: rust-clippy-rand
 rust-clippy-rand:
-	cd rust && cargo clippy --all-targets --features rand -- -D warnings
+	cd rust && nice cargo clippy --all-targets --features rand -- -D warnings
 
 .PHONY: rust-clippy-cli
 rust-clippy-cli:
-	cd rust && cargo clippy --all-targets --features cli -- -D warnings
+	cd rust && nice cargo clippy --all-targets --features cli -- -D warnings
 
 .PHONY: rust-test
 rust-test:
-	cd rust && timeout 60 cargo test
+	cd rust && nice timeout 60 cargo test
 
 .PHONY: rust-test-rand
 rust-test-rand:
-	cd rust && timeout 60 cargo test --features rand
+	cd rust && nice timeout 60 cargo test --features rand
 
 .PHONY: rust-test-cli
 rust-test-cli:
-	cd rust && timeout 60 cargo test --features cli
+	cd rust && nice timeout 60 cargo test --features cli
 
 ## --- Extended, opt-in testing (not part of check/CI) ---
 
 .PHONY: go-fuzz
 go-fuzz:
-	cd go && go test -fuzz=FuzzCompute -fuzztime=30s .
+	cd go && nice go test -fuzz=FuzzCompute -fuzztime=30s -timeout=2m .
 
 .PHONY: rust-proptest-deep
 rust-proptest-deep:
-	cd rust && PROPTEST_CASES=100000 cargo test --test properties
+	cd rust && PROPTEST_CASES=100000 nice timeout 300 cargo test --test properties

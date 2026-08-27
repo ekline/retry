@@ -6,7 +6,7 @@
 //! computed retransmission timeouts, one per line, suitable for piping
 //! into other tools. See `SPEC.md` §13.
 //!
-//! Not part of the `retry` library's public API and not covered by its
+//! Not part of the `libretry` library's public API and not covered by its
 //! SemVer guarantees; only built with `--features cli`.
 
 use std::io::{self, ErrorKind, Write};
@@ -15,7 +15,7 @@ use std::time::Duration;
 
 use clap::Parser;
 
-use retry::{FixedJitter, Params, Sequence};
+use libretry::{FixedJitter, Params, Sequence};
 
 /// Print a sequence of computed retransmission timeouts, one per line, in
 /// the spirit of `seq`.

@@ -1,4 +1,4 @@
-# retry: Specification
+# libretry: Specification
 
 A pure, sans-I/O retransmission backoff calculator with parallel implementations in Go and Rust, sharing a single set of conformance test vectors.
 
@@ -38,9 +38,9 @@ Single repository, two language implementations, shared test vectors.
 │   └── *.json
 ├── go/
 │   ├── go.mod
-│   ├── retry.go
+│   ├── libretry.go
 │   ├── sequence.go
-│   ├── retry_test.go
+│   ├── libretry_test.go
 │   ├── fuzz_test.go
 │   └── conformance_test.go
 └── rust/
@@ -57,9 +57,9 @@ Single repository, two language implementations, shared test vectors.
         └── conformance.rs
 ```
 
-- Go module path: `github.com/ekline/retry/go` (resolved).
-- Rust crate name: `retry` (resolved).
-- GitHub organization/location: `github.com/ekline/retry` (resolved).
+- Go module path: `github.com/ekline/libretry/go` (resolved).
+- Rust crate name: `libretry` (resolved).
+- GitHub organization/location: `github.com/ekline/libretry` (resolved; repository rename pending).
 - Release tags: `go/vX.Y.Z` and `rust/vX.Y.Z` independently; both versions track the same SPEC version.
 
 ## 3. License
@@ -274,7 +274,7 @@ A small script under `testvectors/generate.py` (or equivalent) seeds a portable 
 
 ### 8.1 Rust
 
-- **Crate name**: `retry` (resolved).
+- **Crate name**: `libretry` (resolved).
 - **MSRV**: Rust 1.70 or later.
 - **`no_std` + `alloc`** by default. `std` not required.
 - **Features**:
@@ -287,10 +287,10 @@ A small script under `testvectors/generate.py` (or equivalent) seeds a portable 
 
 ### 8.2 Go
 
-- **Module path**: `github.com/ekline/retry/go` (resolved).
+- **Module path**: `github.com/ekline/libretry/go` (resolved).
 - **Go version**: 1.22 or later.
 - **Dependencies**: none (`math/rand/v2` is stdlib).
-- **Package name**: `retry`.
+- **Package name**: `libretry`.
 - **Public API**: `Params`, `State`, `Step`, `Termination`, `JitterSource`, `FixedJitter`, `UniformJitter`, `Compute`. Additive convenience layer (§11): `NewParams`, `Option`, `With*`, `Sequence`, `JitterFunc`.
 - **Lints**: `go vet`, `gofmt`, `staticcheck` (clean).
 
@@ -339,9 +339,9 @@ Direct struct literals remain valid in both languages, but the zero-value `Param
 - **Go**: `NewParams(initialRT, opts ...Option) Params` defaults `MaxRetries` to unbounded (`-1`) and applies functional options:
 
   ```
-  retry.NewParams(time.Second,
-      retry.WithMaxInterval(30*time.Second),
-      retry.WithMaxRetries(10),
+  libretry.NewParams(time.Second,
+      libretry.WithMaxInterval(30*time.Second),
+      libretry.WithMaxRetries(10),
   )
   ```
 
@@ -369,7 +369,7 @@ This constructor deliberately stays generic rather than growing protocol-specifi
 - **Go**: `*Sequence` follows the `bufio.Scanner` shape. `NewSequence(params, jitter) *Sequence` constructs one; `Next() bool` advances it; `RT() time.Duration` and `Reason() (Termination, bool)` are the accessors; `State() State` and `SetParams(params)` round it out.
 
   ```
-  seq := retry.NewSequence(params, jitter)
+  seq := libretry.NewSequence(params, jitter)
   transmit(msg)
   for seq.Next() {
       time.Sleep(seq.RT())
@@ -386,7 +386,7 @@ This is the only concession to mutation-style convenience: `compute` itself neve
 Both languages let a plain function act as a `JitterSource` without a named wrapper type:
 
 - **Rust**: a blanket `impl<F: FnMut() -> f64> JitterSource for F` means any `FnMut() -> f64` closure (or function item) can be passed anywhere a `JitterSource` is expected, e.g. `compute(&params, state, &mut || rng.gen_range(-0.1..0.1))`.
-- **Go**: `JitterFunc func() float64` implements `JitterSource` via a method on the function type, mirroring `http.HandlerFunc`: `retry.JitterFunc(func() float64 { return rng.Float64()*0.2 - 0.1 })`.
+- **Go**: `JitterFunc func() float64` implements `JitterSource` via a method on the function type, mirroring `http.HandlerFunc`: `libretry.JitterFunc(func() float64 { return rng.Float64()*0.2 - 0.1 })`.
 
 ## 12. Property-based and fuzz testing
 
@@ -425,6 +425,7 @@ A small, Rust-only `retry` binary (`rust/src/main.rs`), in the spirit of `seq`: 
 - **Not part of the library's public API and not covered by SemVer (§10).** It exists for manual inspection and documentation, the same purpose originally sketched (as `cmd/retry-trace` or `examples/trace.rs`) before this spec's open design questions were all settled.
 - **Go-less by design.** Only Rust ships this; there is no `go/cmd/retry-trace` equivalent. Nothing about the CLI is algorithm-specific enough to need cross-language parity or conformance-vector coverage -- it is a thin, disposable presentation layer over `Sequence`.
 - **Built only with `--features cli`** (pulls in `clap`), so the default build and any library-only consumer stay dependency-free (§8.1).
+- **Named `retry`, not `libretry`.** The binary's name is independent of the crate's: unlike crate names, binary names aren't globally namespaced, so there was no naming conflict to resolve, and `retry` is simply the better command name (`libretry 1000 ...` reads oddly for something you type, not `use`).
 - **Interface**: `retry <INITIAL_RT_MS> [OPTIONS]`, with `--max-interval-ms`, `--max-retries`, `--max-duration-ms` mapping directly to `Params`, `--jitter F,F,...` supplying a `FixedJitter` (repeating the last value forever once exhausted, per §4.5), `-n/--count` capping output for unbounded schedules (default 20), and `-H/--human` switching from plain-milliseconds to `Duration`'s human-readable `Debug` format. Run `retry --help` for the full, authoritative list -- this SPEC does not duplicate it field-by-field.
 - **Output discipline, matching `seq`**: stdout carries only the computed values, one per line (milliseconds by default), so the output is pipeable; a give-up reason, if the schedule ends that way, is a single line on stderr, not stdout. A downstream reader closing the pipe early (e.g. `retry 1000 | head -3`) exits cleanly rather than reporting a broken-pipe error.
 - **Tests**: `rust/tests/cli.rs` (gated by `#[cfg(feature = "cli")]`, mirroring how `tests/uniform_jitter.rs` gates on `rand`) runs the built binary via `std::process::Command` and checks its output.

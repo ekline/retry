@@ -58,7 +58,7 @@ impl Params {
     ///
     /// ```
     /// # use core::time::Duration;
-    /// # use retry::Params;
+    /// # use libretry::Params;
     /// let params = Params::new(Duration::from_secs(1))
     ///     .with_max_interval(Duration::from_secs(30))
     ///     .with_max_retries(10);

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Erik Kline
 // SPDX-License-Identifier: MIT
 
-package retry
+package libretry
 
 import "time"
 
@@ -10,7 +10,7 @@ import "time"
 // scheduling, or sleeping itself -- it only replaces the manual
 // State-threading in the caller pattern described in SPEC.md §6:
 //
-//	seq := retry.NewSequence(params, jitter)
+//	seq := libretry.NewSequence(params, jitter)
 //	transmit(message)
 //	for seq.Next() {
 //		time.Sleep(seq.RT())

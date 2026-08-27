@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) 2026 Erik Kline
 # SPDX-License-Identifier: MIT
-"""Generates conformance test vectors for the `retry` library.
+"""Generates conformance test vectors for the `libretry` library.
 
 This script is the reference implementation of the algorithm in SPEC.md
 section 5: it is written directly against that spec (integer-nanosecond

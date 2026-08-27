@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Erik Kline
 // SPDX-License-Identifier: MIT
 
-//! Replays the shared `testvectors/*.json` files against `retry::compute`
+//! Replays the shared `testvectors/*.json` files against `libretry::compute`
 //! and asserts exact agreement, mirroring `go/conformance_test.go`.
 
 use std::fs;
@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use serde::Deserialize;
 
-use retry::{compute, FixedJitter, Params, State, Step, Termination};
+use libretry::{compute, FixedJitter, Params, State, Step, Termination};
 
 /// Mirrors the schema documented in `testvectors/README.md`.
 #[derive(Debug, Deserialize)]

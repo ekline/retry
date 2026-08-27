@@ -5,7 +5,7 @@
 
 use core::time::Duration;
 
-use retry::{FixedJitter, Params, Sequence, Termination};
+use libretry::{FixedJitter, Params, Sequence, Termination};
 
 fn ms(n: u64) -> Duration {
     Duration::from_millis(n)

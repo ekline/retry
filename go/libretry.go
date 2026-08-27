@@ -1,13 +1,13 @@
 // Copyright (c) 2026 Erik Kline
 // SPDX-License-Identifier: MIT
 
-// Package retry implements a pure, sans-I/O retransmission backoff
+// Package libretry implements a pure, sans-I/O retransmission backoff
 // calculator, generic over protocol. The shape of the parameters and the
 // doubling-with-jitter algorithm are drawn from RFC 9915 §15, but this
 // package has no DHCPv6, CoAP, TLS, or other protocol-specific behavior.
 //
 // See SPEC.md at the repository root for the full design specification.
-package retry
+package libretry
 
 import (
 	"math"
@@ -69,9 +69,9 @@ func WithMaxDuration(d time.Duration) Option {
 // NewParams returns Params with initialRT and every optional field
 // unbounded unless overridden by opts:
 //
-//	params := retry.NewParams(time.Second,
-//		retry.WithMaxInterval(30*time.Second),
-//		retry.WithMaxRetries(10),
+//	params := libretry.NewParams(time.Second,
+//		libretry.WithMaxInterval(30*time.Second),
+//		libretry.WithMaxRetries(10),
 //	)
 //
 // This differs from the zero value Params{}, whose zero MaxRetries means
@@ -214,7 +214,7 @@ func (u *UniformJitter) NextJitter() float64 {
 // http.HandlerFunc. Useful for one-off jitter sources that don't warrant
 // a named type:
 //
-//	jitter := retry.JitterFunc(func() float64 {
+//	jitter := libretry.JitterFunc(func() float64 {
 //		return rng.Float64()*0.2 - 0.1
 //	})
 type JitterFunc func() float64

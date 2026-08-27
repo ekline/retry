@@ -1,11 +1,11 @@
 [package]
-name = "retry"
+name = "libretry"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.70"
 description = "A pure, sans-I/O retransmission backoff calculator (RFC 9915 section 15 shaped), generic over protocol."
 license = "MIT"
-repository = "https://github.com/ekline/retry"
+repository = "https://github.com/ekline/libretry"
 readme = "../README.md"
 keywords = ["backoff", "retry", "retransmission"]
 categories = ["algorithms", "no-std"]
@@ -13,7 +13,7 @@ categories = ["algorithms", "no-std"]
 [[bin]]
 name = "retry"
 path = "src/main.rs"
-# Keeps the library's default build (and any downstream `retry = "0.1"`
+# Keeps the library's default build (and any downstream `libretry = "0.1"`
 # library-only consumer) free of the CLI's dependencies: this target,
 # and clap below, are only pulled in when --features cli is requested.
 required-features = ["cli"]

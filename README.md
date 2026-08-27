@@ -1,4 +1,4 @@
-# retry
+# libretry
 
 A pure, sans-I/O retransmission backoff calculator, with parallel Go and Rust
 implementations sharing a single set of conformance test vectors.
@@ -22,7 +22,7 @@ calls by hand.
 **Rust:**
 
 ```rust
-use retry::{FixedJitter, Params, Sequence};
+use libretry::{FixedJitter, Params, Sequence};
 
 let params = Params::new(Duration::from_secs(1))
     .with_max_interval(Duration::from_secs(30))
@@ -45,11 +45,11 @@ if let Some(reason) = seq.reason() {
 **Go:**
 
 ```go
-params := retry.NewParams(time.Second,
-    retry.WithMaxInterval(30*time.Second),
-    retry.WithMaxRetries(10),
+params := libretry.NewParams(time.Second,
+    libretry.WithMaxInterval(30*time.Second),
+    libretry.WithMaxRetries(10),
 )
-seq := retry.NewSequence(params, retry.NewFixedJitter(make([]float64, 11)))
+seq := libretry.NewSequence(params, libretry.NewFixedJitter(make([]float64, 11)))
 
 transmit(msg)
 for seq.Next() {
@@ -103,8 +103,8 @@ build stays dependency-free. Run `retry --help` for the full option list.
 ├── LICENSE                # MIT
 ├── Makefile                # `make check` etc. -- see Building & testing below
 ├── testvectors/           # shared conformance test vectors (JSON) + generator
-├── go/                     # Go implementation (module github.com/ekline/retry/go)
-└── rust/                   # Rust implementation (crate `retry`)
+├── go/                     # Go implementation (module github.com/ekline/libretry/go)
+└── rust/                   # Rust implementation (crate `libretry`)
 ```
 
 ## Building & testing

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Erik Kline
 // SPDX-License-Identifier: MIT
 
-package retry
+package libretry
 
 import (
 	"math"
