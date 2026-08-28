@@ -5,6 +5,7 @@ edition = "2021"
 rust-version = "1.70"
 description = "A pure, sans-I/O retransmission backoff calculator (RFC 9915 section 15 shaped), generic over protocol."
 license = "MIT"
+homepage = "https://github.com/ekline/libretry"
 repository = "https://github.com/ekline/libretry"
 readme = "../README.md"
 keywords = ["backoff", "retry", "retransmission"]
